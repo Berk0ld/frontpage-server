@@ -12,6 +12,11 @@ const posts = [
   { id: 3, authorId: 2, title: 'Advanced GraphQL', votes: 1 },
 ];
 
+const tokens = [
+  { id : "1" },
+  { id : "2" }
+];
+
 const resolveFunctions = {
   Query: {
     posts() {
@@ -20,6 +25,10 @@ const resolveFunctions = {
     author(_, { id }) {
       return find(authors, { id: id });
     },
+    refresh() {
+      return tokens[2] 
+    }
+
   },
   Mutation: {
     upvotePost(_, { postId }) {

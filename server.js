@@ -9,41 +9,68 @@ import { printSchema } from 'graphql/utilities/schemaPrinter';
 import { subscriptionManager } from './data/subscriptions';
 import schema from './data/schema';
 
+const helperMiddleware = [
+bodyParser.json(),
+bodyParser.text({ type: 'application/graphql' }), (req, res, next) => {
+	if (req.body.query.includes("RefreshToken")) {
+		res.setHeader('auth', "2")
+		res.status(200)
+		next()
+		return
+	}
+
+	const headers = req.headers
+	if (headers == null) {
+		res.status(404)  
+		next();
+		return
+	}
+
+	const auth = headers['auth']
+	if (auth == "1") {
+		res.status(400)
+	} else if (auth == "2") {
+		res.status(200)
+	}            
+	next()
+}
+];
+
 const GRAPHQL_PORT = 8080;
 const WS_PORT = 8090;
 
 const graphQLServer = express().use('*', cors());
 
-graphQLServer.use('/graphql', bodyParser.json(), graphqlExpress({
-  schema,
-  context: {},
+graphQLServer.use('/graphql', ...helperMiddleware, graphqlExpress({
+	schema,
+	context: {}
 }));
 
 graphQLServer.use('/graphiql', graphiqlExpress({
-  endpointURL: '/graphql',
+	endpointURL: '/graphql',
 }));
 
 graphQLServer.use('/schema', (req, res) => {
-  res.set('Content-Type', 'text/plain');
-  res.send(printSchema(schema));
+	res.set('Content-Type', 'text/plain');
+	res.send(printSchema(schema));
 });
 
 graphQLServer.listen(GRAPHQL_PORT, () => console.log(
-  `GraphQL Server is now running on http://localhost:${GRAPHQL_PORT}/graphql`
-));
+	`GraphQL Server is now running on http://localhost:${GRAPHQL_PORT}/graphql`
+	));
 
 // WebSocket server for subscriptions
 const websocketServer = createServer((request, response) => {
-  response.writeHead(404);
-  response.end();
+	response.writeHead(404);
+	response.end();
 });
 
 websocketServer.listen(WS_PORT, () => console.log( // eslint-disable-line no-console
-  `Websocket Server is now running on http://localhost:${WS_PORT}`
-));
+	`Websocket Server is now running on http://localhost:${WS_PORT}`
+	));
 
 // eslint-disable-next-line
 new SubscriptionServer(
-  { subscriptionManager },
-  websocketServer
-);
+	{ subscriptionManager },
+	websocketServer
+	);

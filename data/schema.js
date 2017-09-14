@@ -21,6 +21,7 @@ type Post {
 type Query {
   posts: [Post]
   author(id: Int!): Author
+  refresh: Token
 }
 
 # this schema allows the following mutation:
@@ -34,7 +35,11 @@ type Subscription {
   postUpvoted: Post
 }
 
-`;
+# token schema
+type Token {
+  id: String!
+}`
+;
 
 export default makeExecutableSchema({
   typeDefs: schema,
